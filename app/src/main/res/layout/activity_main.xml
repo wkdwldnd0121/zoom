@@ -5,7 +5,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
-
+    <!--    linearlayout 순서대로 설정한게 설정됨-->
+    <!--    frameLayout카메라 미리보기 할 공간-->
+    <!--    gravity는 layout을 어디다 배치할지-->
+    <!--    wrap content 화면이 꽉 찰떄까지만 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -16,7 +19,14 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1" />
+        <FrameLayout
+            android:id="@+id/camera_preview_second"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+       />
 
+        <!--        버튼을 linearlayout으로 감싸줌-->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -26,6 +36,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
+                android:onClick="takePicture"
                 android:text="촬영" />
 
             <Button
@@ -36,5 +47,6 @@
                 android:text="카메라 변경" />
         </LinearLayout>
     </LinearLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
 
