@@ -15,6 +15,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.jbj.zoom.features.camera.CameraManager;
@@ -22,19 +23,23 @@ import com.jbj.zoom.features.camera.CameraPreview;
 import com.jbj.zoom.features.camera.CameraStreamView;
 
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_CAMERA = 100001;        //권한요청번호
     private static final int PERMISSION_REQUEST_SAVE_FILE = 100002;
+
     private static CameraPreview cameraPreview; //전역 변수 선언
     private static Camera camera;
+
+    private List<CameraStreamView> streamViewList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
 
         // 앱 실행시 권한 검사
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -49,7 +54,6 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
         }
-
 
         //카메라가 사용가능한지 확인하기
         CameraManager manager = CameraManager.getCameraManager();
@@ -69,30 +73,22 @@ public class MainActivity extends AppCompatActivity {
         cameraPreview = new CameraPreview(this, camera);
         FrameLayout preview = findViewById(R.id.camera_preview);     // framelayout 만든거 가져옴
         preview.addView(cameraPreview);                             // 미리보기 띠우기
-        this.camera = camera;                                       //요청된 카메라 activity에 보관
+        this.camera = camera;                     //요청된 카메라 activity에 보관
 
-
-        FrameLayout preview2 = findViewById(R.id.camera_preview_second);
         final CameraStreamView streamView = new CameraStreamView(this);
+
+
+        this.streamViewList.add(streamView);
+        LinearLayout streamList = findViewById(R.id.stream_list);
+        streamList.addView(streamView);
 
         camera.setPreviewCallback(new Camera.PreviewCallback() {
             @Override
             public void onPreviewFrame(byte[] data, Camera camera) {
-                Camera.Parameters parameters = camera.getParameters();
-                int width = parameters.getPreviewSize().width;
-                int height = parameters.getPreviewSize().height;
-
-                YuvImage yuv = new YuvImage(data, parameters.getPreviewFormat(), width, height, null);
-
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                yuv.compressToJpeg(new Rect(0, 0, width, height), 50, out);
-
-                byte[] bytes = out.toByteArray();
-
-                streamView.drawStream(bytes);
+                MainActivity.this.updateStreamView(data, camera);
             }
         });
-        preview2.addView(streamView);
+
     }
 
 
@@ -115,18 +111,54 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //카메라바꾸기
     public void changeCamera(View view) {
         CameraManager manager = CameraManager.getCameraManager();
         Camera camera = manager.getNextCamera();   //카메라 순서대로 바꾸기
         cameraPreview.changeCamera(camera);
+        final CameraStreamView streamView = new CameraStreamView(this);
+
+        camera.setPreviewCallback(new Camera.PreviewCallback() {
+            @Override
+            public void onPreviewFrame(byte[] data, Camera camera) {
+                MainActivity.this.updateStreamView(data, camera);
+            }
+        });
+
         this.camera = camera;
     }
 
     public void takePicture(View view) {         // View는 화면에 표시되는 모든거 View view는 이벤트핸들러 역할
         CameraManager cameraManager = CameraManager.getCameraManager();
-        cameraManager.takeAndSaveImage(this.camera);        //takeAndSaveImage함수실행
+        cameraManager.takeAndSaveImage(this.camera);        //takeAndSaveImage 함수실행
         Toast.makeText(this, "저장완료", Toast.LENGTH_LONG).show();
     }
 
+    //화면추가
+    public void addStreamView(View view) {
+        final CameraStreamView streamView = new CameraStreamView(this);
+
+        this.streamViewList.add(streamView);    //새로만든거 리스트에 추가
+        LinearLayout streamLayout = findViewById(R.id.stream_list); //지금 추가된 화면을 출력
+        streamLayout.addView(streamView);
+    }
+
+    public void updateStreamView(byte[] data, Camera camera) {
+        Camera.Parameters parameters = camera.getParameters();
+        int width = parameters.getPreviewSize().width;
+        int height = parameters.getPreviewSize().height;
+
+        YuvImage yuv = new YuvImage(data, parameters.getPreviewFormat(), width, height, null);
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        yuv.compressToJpeg(new Rect(0, 0, width, height), 50, out);
+
+        CameraManager manager = CameraManager.getCameraManager();
+
+        byte[] bytes = out.toByteArray();
+        for (CameraStreamView stream : this.streamViewList) {
+            stream.drawStream(bytes,parameters.getJpegThumbnailSize(), manager.isFrontCamera());
+        }
+    }
 
 }

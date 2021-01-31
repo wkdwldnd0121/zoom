@@ -19,7 +19,7 @@ import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE;
 public class CameraManager {
     private static CameraManager cameraManager;
     private static int maxCamera;
-    private static int currenCamera = 0;    // 기본카메라 번호
+    private static int currentCamera = 0;    // 기본카메라 번호
 
     private CameraManager() {
     }
@@ -55,8 +55,8 @@ public class CameraManager {
         Camera camera = null;
 
         try {
-            currenCamera = (currenCamera + 1) % maxCamera;
-            camera = Camera.open(currenCamera);     //.open()으로 요청 실패하면 catch로 넘어감
+            currentCamera = (currentCamera + 1) % maxCamera;
+            camera = Camera.open(currentCamera);     //.open()으로 요청 실패하면 catch로 넘어감
             Camera.Parameters cameraParameters = camera.getParameters();    //카메라 속성 불러오기
             if (cameraParameters.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {//카메라의 초점 조절하는거 자동사용
                 cameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
@@ -136,5 +136,10 @@ public class CameraManager {
         return mediaFile;
     }
 
+    public boolean isFrontCamera() {
+        Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+        Camera.getCameraInfo(currentCamera, cameraInfo);
+        return cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT;
+    }
 
 }

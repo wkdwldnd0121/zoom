@@ -19,12 +19,20 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1" />
-        <FrameLayout
+
+        <!--horiaontalscrollview 좌우로 스크롤되는화면-->
+        <HorizontalScrollView
             android:id="@+id/camera_preview_second"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="1"
-       />
+            android:layout_weight="1">
+
+            <LinearLayout
+                android:id="@+id/stream_list"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
 
         <!--        버튼을 linearlayout으로 감싸줌-->
         <LinearLayout
@@ -45,8 +53,14 @@
                 android:layout_gravity="center"
                 android:onClick="changeCamera"
                 android:text="카메라 변경" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:onClick="addStreamView"
+                android:text="화면 추가" />
         </LinearLayout>
     </LinearLayout>
-
 </androidx.constraintlayout.widget.ConstraintLayout>
 

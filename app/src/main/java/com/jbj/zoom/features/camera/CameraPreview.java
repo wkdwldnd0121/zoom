@@ -29,8 +29,9 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     public void surfaceCreated(SurfaceHolder holder) {
         try {
             this.camera.setPreviewDisplay(holder);      // 미리보기 관리  화면에서 보여줄 방향 방향을 보여주기 위해 각도가 필요함
-            this.camera.setDisplayOrientation(getDegree());
-            this.camera.startPreview();             //미리보기 생성해주는거
+            this.camera.setDisplayOrientation(this.getDegree());
+
+              this.camera.startPreview();             //미리보기 생성해주는거
 
         } catch (IOException e) {
             Log.d("CameraPreview", "미리보기 생성 실패" + e.getMessage());
@@ -44,13 +45,12 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         }
         try {       //화면 없애고
             this.camera.stopPreview();
-            camera.setPreviewCallback(null);
         } catch (Exception e) {
 
         }
         try {           //새로 그리기
-            this.camera.setPreviewDisplay(holder);
-            this.camera.setDisplayOrientation(getDegree());
+            this.camera.setPreviewDisplay(this.holder);
+            this.camera.setDisplayOrientation(this.getDegree()); //화면방향지정
             this.camera.startPreview();
 
         } catch (Exception e) {
@@ -61,6 +61,15 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
+        try {
+            this.camera.stopPreview();
+            this.camera.setPreviewCallback(null);
+            this.camera.release();
+            this.camera = null;
+
+        } catch (Exception e) {
+
+        }
 
     }
 
@@ -85,6 +94,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     public void changeCamera(Camera newCamera) {
         try {
             this.camera.stopPreview();
+            this.camera.setPreviewCallback(null);
             this.camera.release();
             this.camera = null;
         } catch (Exception e) {
@@ -92,7 +102,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         }
         try {
             newCamera.setPreviewDisplay(this.holder);
-            newCamera.setDisplayOrientation(getDegree());
+            newCamera.setDisplayOrientation(this.getDegree());
             newCamera.startPreview();
             this.camera = newCamera;
         } catch (Exception e) {
