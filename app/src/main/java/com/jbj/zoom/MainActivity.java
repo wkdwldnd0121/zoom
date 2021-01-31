@@ -14,13 +14,17 @@ import android.hardware.Camera;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.jbj.zoom.features.camera.CameraManager;
 import com.jbj.zoom.features.camera.CameraPreview;
 import com.jbj.zoom.features.camera.CameraStreamView;
+import com.jbj.zoom.features.chat.ChatTextAdapter;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
@@ -35,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
     private static Camera camera;
 
     private List<CameraStreamView> streamViewList = new ArrayList<>();
+    private ChatTextAdapter chatTextAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,17 +75,17 @@ public class MainActivity extends AppCompatActivity {
         }
 
         Camera camera = manager.getCamera();
+
         cameraPreview = new CameraPreview(this, camera);
         FrameLayout preview = findViewById(R.id.camera_preview);     // framelayout 만든거 가져옴
         preview.addView(cameraPreview);                             // 미리보기 띠우기
-        this.camera = camera;                     //요청된 카메라 activity에 보관
 
-        final CameraStreamView streamView = new CameraStreamView(this);
+//        final CameraStreamView streamView = new CameraStreamView(this);
+//        this.streamViewList.add(streamView);
+//        LinearLayout streamList = findViewById(R.id.stream_list);
+//        streamList.addView(streamView);
 
-
-        this.streamViewList.add(streamView);
-        LinearLayout streamList = findViewById(R.id.stream_list);
-        streamList.addView(streamView);
+        this.addStreamView(null);
 
         camera.setPreviewCallback(new Camera.PreviewCallback() {
             @Override
@@ -88,9 +93,26 @@ public class MainActivity extends AppCompatActivity {
                 MainActivity.this.updateStreamView(data, camera);
             }
         });
+        this.camera = camera;              //요청된 카메라 activity에 보관
+
+        this.chatTextAdapter = new ChatTextAdapter(this);
+        this.chatTextAdapter.addMessage("halo");
+
+        ListView chatList = new ListView(this);
+        chatList.setAdapter(this.chatTextAdapter);
+
+        preview.addView(chatList);
+
 
     }
 
+    public void sendMessage(View view) {
+        EditText editText = findViewById(R.id.message_edit);
+        String message = editText.getText().toString();
+        this.chatTextAdapter.addMessage(message);
+        this.chatTextAdapter.notifyDataSetChanged();
+
+    }
 
     // 사용자 권한에 대해 반응한 결과 받기
     @Override
@@ -137,10 +159,21 @@ public class MainActivity extends AppCompatActivity {
     //화면추가
     public void addStreamView(View view) {
         final CameraStreamView streamView = new CameraStreamView(this);
-
         this.streamViewList.add(streamView);    //새로만든거 리스트에 추가
         LinearLayout streamLayout = findViewById(R.id.stream_list); //지금 추가된 화면을 출력
-        streamLayout.addView(streamView);
+        final LinearLayout userView = new LinearLayout(this); //userView를 만듬
+        userView.setOrientation(LinearLayout.VERTICAL);
+        Button closeButton = new Button(this);
+        userView.addView(streamView);   //streamview나오고
+        userView.addView(closeButton);  //밑에 button이 나옴
+        streamLayout.addView(userView); //addview는 하나밖에 추가 안되서 여러개를 묶어서 한번에 보내줘야댐
+        closeButton.setText("종료");
+        closeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MainActivity.this.removeStreamView(userView, streamView);
+            }
+        });
     }
 
     public void updateStreamView(byte[] data, Camera camera) {
@@ -157,8 +190,15 @@ public class MainActivity extends AppCompatActivity {
 
         byte[] bytes = out.toByteArray();
         for (CameraStreamView stream : this.streamViewList) {
-            stream.drawStream(bytes,parameters.getJpegThumbnailSize(), manager.isFrontCamera());
+            stream.drawStream(bytes, parameters.getJpegThumbnailSize(), manager.isFrontCamera());
         }
+    }
+
+    // 삭제를 위한 함수
+    public void removeStreamView(LinearLayout view, CameraStreamView streamView) {
+        LinearLayout streamLayout = findViewById(R.id.stream_list);
+        streamLayout.removeViewInLayout(view);  // 전달받은 미리보기를 지우기
+        this.streamViewList.remove(streamView);
     }
 
 }
