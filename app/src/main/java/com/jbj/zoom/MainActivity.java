@@ -13,6 +13,8 @@ import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -24,6 +26,7 @@ import android.widget.Toast;
 import com.jbj.zoom.features.camera.CameraManager;
 import com.jbj.zoom.features.camera.CameraPreview;
 import com.jbj.zoom.features.camera.CameraStreamView;
+import com.jbj.zoom.features.chat.ChatClient;
 import com.jbj.zoom.features.chat.ChatTextAdapter;
 
 import java.io.ByteArrayOutputStream;
@@ -34,12 +37,14 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_CAMERA = 100001;        //권한요청번호
     private static final int PERMISSION_REQUEST_SAVE_FILE = 100002;
+    private static final int PERMISSION_REQUEST_INTERNET = 100003;
 
     private static CameraPreview cameraPreview; //전역 변수 선언
     private static Camera camera;
 
     private List<CameraStreamView> streamViewList = new ArrayList<>();
     private ChatTextAdapter chatTextAdapter;
+    private ChatClient chatClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +63,12 @@ public class MainActivity extends AppCompatActivity {
                 requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_REQUEST_SAVE_FILE);
                 return;
             }
+            //인터넷 연결 권한 있는지 확인 후 없으면 요청
+            if (checkSelfPermission(Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.INTERNET}, PERMISSION_REQUEST_INTERNET);
+                return;
+            }
+
         }
 
         //카메라가 사용가능한지 확인하기
@@ -96,22 +107,36 @@ public class MainActivity extends AppCompatActivity {
         this.camera = camera;              //요청된 카메라 activity에 보관
 
         this.chatTextAdapter = new ChatTextAdapter(this);
-        this.chatTextAdapter.addMessage("halo");
 
         ListView chatList = new ListView(this);
         chatList.setAdapter(this.chatTextAdapter);
 
         preview.addView(chatList);
 
+        this.chatClient = new ChatClient(this.getMessageHandler());
+        this.chatClient.send("hello?");
 
     }
 
     public void sendMessage(View view) {
         EditText editText = findViewById(R.id.message_edit);
         String message = editText.getText().toString();
-        this.chatTextAdapter.addMessage(message);
-        this.chatTextAdapter.notifyDataSetChanged();
+        this.chatClient.send(message);
+//        this.chatTextAdapter.addMessage(message);
+//        this.chatTextAdapter.notifyDataSetChanged();
+//        this.chatTextAdapter.removeMessage();
+    }
 
+    public Handler getMessageHandler(){
+        return new Handler(new Handler.Callback() {
+            @Override
+            public boolean handleMessage(@NonNull Message msg) {
+                String message = (String) msg.obj;
+                chatTextAdapter.addMessage(message);
+                chatTextAdapter.notifyDataSetChanged();
+                return true;
+            }
+        });
     }
 
     // 사용자 권한에 대해 반응한 결과 받기
@@ -120,6 +145,7 @@ public class MainActivity extends AppCompatActivity {
         switch (requestCode) {
             case PERMISSION_REQUEST_CAMERA:
             case PERMISSION_REQUEST_SAVE_FILE:
+            case PERMISSION_REQUEST_INTERNET:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     //권한 승인이 된 경우 첨부터 다시 실행해서 다음 단계 진행
                     recreate();
@@ -148,6 +174,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
         this.camera = camera;
+
+
     }
 
     public void takePicture(View view) {         // View는 화면에 표시되는 모든거 View view는 이벤트핸들러 역할

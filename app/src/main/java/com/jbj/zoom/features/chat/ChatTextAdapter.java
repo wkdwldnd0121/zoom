@@ -20,7 +20,11 @@ public class ChatTextAdapter extends BaseAdapter {  //baseadapter를 extends로 
 
     public void addMessage(String message) {
         this.chatTextList.add(message);
+
     }
+//    public void removeMessage(){
+//        this.chatTextList.remove(0);
+//    }
 
     @Override
     public int getCount() {         //가지고 있는 메시지 크기
