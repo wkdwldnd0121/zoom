@@ -27,7 +27,9 @@ import com.jbj.zoom.features.camera.CameraManager;
 import com.jbj.zoom.features.camera.CameraPreview;
 import com.jbj.zoom.features.camera.CameraStreamView;
 import com.jbj.zoom.features.chat.ChatClient;
+import com.jbj.zoom.features.chat.ChatEvent;
 import com.jbj.zoom.features.chat.ChatTextAdapter;
+import com.jbj.zoom.features.chat.ChatUpdateEvent;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
@@ -127,12 +129,22 @@ public class MainActivity extends AppCompatActivity {
 //        this.chatTextAdapter.removeMessage();
     }
 
-    public Handler getMessageHandler(){
+    public Handler getMessageHandler() {
         return new Handler(new Handler.Callback() {
             @Override
             public boolean handleMessage(@NonNull Message msg) {
-                String message = (String) msg.obj;
-                chatTextAdapter.addMessage(message);
+                switch (msg.what) {
+                    case ChatUpdateEvent.RECEIVE_MESSAGE:
+                        String message = (String) msg.obj;
+                        chatTextAdapter.addMessage(message);
+                        break;
+                    case ChatUpdateEvent.UPDATE_MESSAGE:
+                        List<String> messageList = (List<String>) msg.obj;
+                        chatTextAdapter.updateMessage(messageList);
+                        break;
+                    default:
+                        break;
+                }
                 chatTextAdapter.notifyDataSetChanged();
                 return true;
             }

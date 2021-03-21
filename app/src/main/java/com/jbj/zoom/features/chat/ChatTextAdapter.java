@@ -17,11 +17,14 @@ public class ChatTextAdapter extends BaseAdapter {  //baseadapter를 extends로 
         this.context = context;
     }
 
+    public void updateMessage(List<String> newMessageList) {
+        chatTextList = newMessageList;
+    }
 
     public void addMessage(String message) {
         this.chatTextList.add(message);
-
     }
+
 //    public void removeMessage(){
 //        this.chatTextList.remove(0);
 //    }
